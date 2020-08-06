@@ -276,6 +276,9 @@ class AmapLocation {
     } else if (Platform.isIOS) {
       _iosClient ??= await AMapLocationManager.create__();
 
+      // 设置开启后台定位
+      await _iosClient.set_allowsBackgroundLocationUpdates(true);
+
       // 设置定位模式
       if (mode != null)
         switch (mode) {
