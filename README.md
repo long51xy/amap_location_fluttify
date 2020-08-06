@@ -41,13 +41,13 @@ await AmapCore.init('ios key');
 
 // 单次定位
 if (await requestPermission()) {
-  final location = await AmapLocation.fetchLocation();
+  final location = await AmapLocation.instance.fetchLocation();
   setState(() => _location = location);
 }
 
 // 连续定位
 if (await requestPermission()) {
-  AmapLocation.listenLocation()
+  AmapLocation.instance.listenLocation()
     .listen((location) => setState(() => _location = location));
 }
 ```

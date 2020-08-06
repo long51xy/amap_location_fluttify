@@ -16,8 +16,9 @@ class MyApp extends StatefulWidget {
   _MyAppState createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with AmapLocationDisposeMixin {
+class _MyAppState extends State<MyApp> {
   Location _location;
+  String _fenceStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +34,7 @@ class _MyAppState extends State<MyApp> with AmapLocationDisposeMixin {
               child: Text('获取单次定位'),
               onPressed: () async {
                 if (await requestPermission()) {
-                  final location = await AmapLocation.fetchLocation();
+                  final location = await AmapLocation.instance.fetchLocation();
                   setState(() => _location = location);
                 }
               },
@@ -42,7 +43,8 @@ class _MyAppState extends State<MyApp> with AmapLocationDisposeMixin {
               child: Text('获取连续定位'),
               onPressed: () async {
                 if (await requestPermission()) {
-                  await for (final location in AmapLocation.listenLocation()) {
+                  await for (final location
+                      in AmapLocation.instance.listenLocation()) {
                     setState(() => _location = location);
                   }
                 }
@@ -52,7 +54,7 @@ class _MyAppState extends State<MyApp> with AmapLocationDisposeMixin {
               child: Text('停止定位'),
               onPressed: () async {
                 if (await requestPermission()) {
-                  await AmapLocation.stopLocation();
+                  await AmapLocation.instance.stopLocation();
                   setState(() => _location = null);
                 }
               },
@@ -64,10 +66,23 @@ class _MyAppState extends State<MyApp> with AmapLocationDisposeMixin {
                   textAlign: TextAlign.center,
                 ),
               ),
+            if (_fenceStatus != null)
+              Center(
+                child: Text(
+                  _fenceStatus.toString(),
+                  textAlign: TextAlign.center,
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    AmapLocation.instance.dispose();
+    super.dispose();
   }
 }
 

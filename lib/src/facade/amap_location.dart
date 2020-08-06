@@ -12,31 +12,31 @@ import 'models.dart';
 
 part 'delegates.dart';
 
-/// 释放原生对象Mixin
-mixin AmapLocationDisposeMixin<T extends StatefulWidget> on State<T> {
-  @override
-  void dispose() {
-    AmapLocation.dispose();
-    super.dispose();
-  }
+/// 高德定位 主类
+class AmapLocation with _Holder, _Community, _Pro {
+  static AmapLocation instance = AmapLocation._();
+
+  AmapLocation._() {}
 }
 
-/// 高德定位 主类
-class AmapLocation {
-  AmapLocation._();
+class _Holder {
+  com_amap_api_location_AMapLocationClient _androidClient;
+  com_amap_api_fence_GeoFenceClient _androidGeoFenceClient;
+  AMapLocationManager _iosClient;
+  AMapGeoFenceManager _iosGeoFenceClient;
 
-  static com_amap_api_location_AMapLocationClient _androidClient;
-  static AMapLocationManager _iosClient;
+  StreamController<Location> _locationController;
+  StreamController<GeoFenceEvent> _geoFenceEventController;
 
-  static StreamController<Location> _locationController;
+  _IOSLocationDelegate _iosLocationDelegate;
+  _AndroidLocationDelegate _androidLocationDelegate;
+}
 
-  static _IOSLocationDelegate _iosLocationDelegate;
-  static _AndroidLocationDelegate _androidLocationDelegate;
-
+mixin _Community on _Holder {
   /// 单次获取定位信息
   ///
   /// 选择定位模式[mode], 设置定位同时是否需要返回地址描述[needAddress], 设置定位请求超时时间，默认为30秒[timeout].
-  static Future<Location> fetchLocation({
+  Future<Location> fetchLocation({
     LocationAccuracy mode = LocationAccuracy.Low,
     bool needAddress,
     Duration timeout,
@@ -185,7 +185,7 @@ class AmapLocation {
   /// 选择定位模式[mode], 设置定位同时是否需要返回地址描述[needAddress], 设置定位请求超时时间，默认为30秒[timeout]
   /// 设置定位间隔[interval], 默认2000 ms， 设置是否开启定位缓存机制[cacheEnable].
   /// [distanceFilter] ios only: 设置更新定位的最小偏移距离, 单位:米.
-  static Stream<Location> listenLocation({
+  Stream<Location> listenLocation({
     LocationAccuracy mode = LocationAccuracy.Low,
     bool needAddress,
     Duration timeout,
@@ -338,7 +338,7 @@ class AmapLocation {
   }
 
   /// 停止定位
-  static Future<void> stopLocation() {
+  Future<void> stopLocation() {
     return platform(
       android: (pool) async {
         _locationController?.close();
@@ -360,7 +360,7 @@ class AmapLocation {
   }
 
   /// 请求后台定位 *仅iOS
-  static Future<void> requireAlwaysAuth() {
+  Future<void> requireAlwaysAuth() {
     return platform(
       android: (pool) async {},
       ios: (pool) async {
@@ -375,7 +375,7 @@ class AmapLocation {
   }
 
   /// 开启后台定位
-  static Future<void> enableBackgroundLocation(
+  Future<void> enableBackgroundLocation(
       int id, BackgroundNotification bgNotification) {
     return platform(
       android: (pool) async {
@@ -399,7 +399,7 @@ class AmapLocation {
   }
 
   /// 关闭后台定位
-  static Future<void> disableBackgroundLocation(bool var1) {
+  Future<void> disableBackgroundLocation(bool var1) {
     return platform(
       android: (pool) async {
         await checkClient();
@@ -412,7 +412,7 @@ class AmapLocation {
   }
 
   /// 确保client不为空
-  static Future<void> checkClient() async {
+  Future<void> checkClient() async {
     if (Platform.isAndroid) {
       // 获取上下文, 这里获取的是Application
       final context = await android_app_Application.get();
@@ -426,9 +426,12 @@ class AmapLocation {
   }
 
   /// 释放对象, 如果[AmapLocationDisposeMixin]不能满足需求时再使用这个方法
-  static Future<void> dispose() async {
+  Future<void> dispose() async {
     _locationController?.close();
     _locationController = null;
+
+    _geoFenceEventController?.close();
+    _geoFenceEventController = null;
 
     _androidLocationDelegate = null;
     _iosLocationDelegate = null;
@@ -447,3 +450,5 @@ class AmapLocation {
     _iosClient = null;
   }
 }
+
+mixin _Pro on _Holder {}
